@@ -11,6 +11,7 @@ import * as Yup from "yup";
 import { Formik } from "formik";
 import Validator from "email-validator";
 import { firebase, db } from "../../firebase";
+import { Alert } from 'react-native';
 
 const SignUpForm = ({ navigation }) => {
   const SignUpschema = Yup.object().shape({

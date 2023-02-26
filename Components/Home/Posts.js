@@ -193,6 +193,9 @@ const Styles = StyleSheet.create({
     marginLeft: 6,
     borderWidth: 1.6,
     borderColor: "#ff8501",
+    resizeMode: "contain",
+    objectFit: "contain",
+    
   },
 
   FooterIcons1: {

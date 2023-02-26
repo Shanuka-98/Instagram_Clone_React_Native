@@ -14,33 +14,58 @@ import {
 import * as ImagePicker from "expo-image-picker";
 
 const UploadDpForm = ({ navigation }) => {
-  const [thumbnailUrl, setThumbnailUrl] = useState('');
-  const [imageUrl, setImageUrl] = useState(null);
-  var UploadImage = false;
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [UploadImage, setUploadImage] = useState(false);
+  const [btnLoading, setBtnLoading] = useState(false);
 
   const selectImage = async () => {
+    setUploadImage(false);
+    setBtnLoading(false);
     try {
       if (UploadImage === false) {
-        global.results = await ImagePicker.launchImageLibraryAsync({
+        results = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsEditing: true,
           aspect: [4, 5],
           quality: 1,
         });
-        setThumbnailUrl(global.results.uri);
-      } else if (UploadImage === true) {
+        setThumbnailUrl(results.uri);
+        setUploadImage(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const upload = async () => {
+    try {
+      setBtnLoading(true);
+      if (UploadImage === true) {
+        setUploadImage(false);
+        console.log("uploading image...");
         const storage = firebase.storage();
         const ref = storage
           .ref()
-          .child("Profile-Pictures/" + global.results.uri.split("/").pop());
+          .child("Profile-Pictures/" + thumbnailUrl.split("/").pop());
 
-        const img = await fetch(global.results.uri);
+        const img = await fetch(thumbnailUrl);
         const bytes = await img.blob();
 
-        ref.put(bytes).then((snapshot) => {
+        const uploadTask = ref.put(bytes);
+
+        uploadTask.on("state_changed", (snapshot) => {
+          // Get the upload progress percentage
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Upload is ${progress}% done`);
+        });
+
+        uploadTask.then((snapshot) => {
           console.log("Uploaded to firebase!");
           snapshot.ref.getDownloadURL().then((downloadURL) => {
-            setImageUrl(downloadURL);
+            //setImageUrl(downloadURL);
+            console.log("File available at", downloadURL);
+            UploadDp(downloadURL);
           });
         });
       }
@@ -49,19 +74,21 @@ const UploadDpForm = ({ navigation }) => {
     }
   };
 
-  const UploadDp = async () => {
+  const UploadDp = async (imageUrl) => {
     try {
-      UploadImage = true;
-      selectImage();
-      const authUser = await firebase.auth().currentUser;
-      db.collection("users").doc(authUser.email).update({
-      profile_image: imageUrl.toString(),
-      });
-      console.log("Image url > ",imageUrl.toString());
-      console.log("Updated!");
-      navigation.navigate("HomeScreen");
+      console.log("Updating profile picture...");
+      if (imageUrl) {
+        const authUser = await firebase.auth().currentUser;
+        await db.collection("users").doc(authUser.email).update({
+          profile_image: imageUrl.toString(),
+        });
+        console.log("Updated profile picture URL: ", imageUrl.toString());
+        navigation.navigate("HomeScreen");
+      } else {
+        console.log("No image URL available for update");
+      }
     } catch (error) {
-      console.log(error);
+      console.log("Error updating profile picture: ", error);
     }
   };
 
@@ -88,8 +115,9 @@ const UploadDpForm = ({ navigation }) => {
       </View>
       <View style={styles.ButtonContainer}>
         <Button
+          loading={btnLoading}
           mode="contained-tonal"
-          onPress={() => UploadDp()}
+          onPress={() => upload()}
           style={styles.button}
         >
           Upload

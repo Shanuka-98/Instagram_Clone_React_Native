@@ -7,19 +7,20 @@ import validUrl from "valid-url";
 import { firebase, db } from "../../firebase";
 import * as ImagePicker from "expo-image-picker";
 import { Button, TextInput } from "react-native-paper";
-
+import { Platform } from "react-native";
 
 const PlaceHolderImage =
   "https://wtwp.com/wp-content/uploads/2015/06/placeholder-image.png";
 
 const uploadPostSchema = Yup.object().shape({
-  //imageUrl: Yup.string().url().required('A URL is required'),
   caption: Yup.string().max(2200, "Caption has reached the characters"),
 });
 
 const FormikPostUploader = ({ navigation }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState(PlaceHolderImage);
   const [currentLoggedInUser, setCurrentLoggedInUser] = useState(null);
+  const [hasMediaLibraryPermission, setHasMediaLibraryPermission] =
+    useState(false);
   var btnLoading = false;
 
   const getUserName = () => {
@@ -61,18 +62,27 @@ const FormikPostUploader = ({ navigation }) => {
         Comments: [],
       })
       .then(() => navigation.goBack());
-      btnLoading = false;
+    btnLoading = false;
 
     return unsubscribe;
   };
 
   useEffect(() => {
     (async () => {
-      if (Platform.OS !== "web") {
+      if (Platform.OS === "ios") {
         const { status } =
           await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
-          alert("Sorry, we need camera roll permissions to make this work!");
+          alert(
+            "Camera roll permission is needed to access photos from your device",
+            [
+              {
+                text: "Cancel",
+                style: "cancel",
+              },
+              { text: "Allow", onPress: () => Linking.openSettings() },
+            ]
+          );
         }
       }
     })();
@@ -93,19 +103,15 @@ const FormikPostUploader = ({ navigation }) => {
     }
   };
 
-const btnLoad = () => {
-
+  const btnLoad = () => {
     if (thumbnailUrl === PlaceHolderImage) {
       btnLoading = false;
-    }
-    else {
+    } else {
       btnLoading = true;
     }
   };
 
-
   const uploadImage = async (caption) => {
-
     console.log("uploading image...");
     try {
       const storage = firebase.storage();
@@ -127,7 +133,7 @@ const btnLoad = () => {
       });
     } catch (error) {
       console.log(error);
-    } 
+    }
   };
 
   return (
@@ -175,7 +181,7 @@ const btnLoad = () => {
             <View style={{ flex: 1, marginLeft: 12, marginTop: 10 }}>
               <TextInput
                 label="Write a caption"
-                style={{ color: "#000", fontSize: 20, backgroundColor: "#fff" }}
+                style={{ color: "#000", fontSize: 15, backgroundColor: "#fff" }}
                 placeholder="e.g My Awesome Selfie"
                 placeholderTextColor={"gray"}
                 multiline={true}
