@@ -49,7 +49,7 @@ const HomeScreen = ({ navigation }) => {
       <Header navigation={navigation} />
       <Stories />
 
-      <ScrollView>
+      <ScrollView style={styles.scrollView}>
         {posts.map((post, index) => (
           <Posts post={post} key={index} />
         ))}
@@ -65,6 +65,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
+
+  scrollView: {
+    marginBottom: 20,
+  },
+
 });
 
 export default HomeScreen;
