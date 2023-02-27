@@ -23,7 +23,7 @@ const UploadDpForm = ({ navigation }) => {
     setBtnLoading(false);
     try {
       if (UploadImage === false) {
-        results = await ImagePicker.launchImageLibraryAsync({
+          const results = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsEditing: true,
           aspect: [4, 5],
